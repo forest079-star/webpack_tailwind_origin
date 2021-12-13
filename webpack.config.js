@@ -11,11 +11,12 @@ const CONTENT_HASH = DEV_MODE ? '' : '-[contenthash]';
 
 module.exports = {
   context: path.resolve('src'), //context 指定所有的檔案都從 src 資料始開始
-  target: 'web',
+  // target: 'web',
   // 入口
   // entry: './index.js',
   entry: { // 程式進入點 產出的 js 會顯示 app-xxxxx.js
     app: ['./index.js'], // 因為有加 context, 所以就不用寫 src
+    about: ['./about.js'], // 因為有加 context, 所以就不用寫 src
   },
   // mode 一定要加，只能是 development 或是 production 兩種. 他可以知道環境變數目前是哪個模式 會看 package.json 設定
   mode: process.env.NODE_ENV,
@@ -28,7 +29,7 @@ module.exports = {
     chunkFilename: `js/[name]-chunk${CONTENT_HASH}.js`, //多程式進入點 [name] 會改為和上方一樣 app 名字 第三方掛件名稱 習慣性增加 chunk 名稱
     path: path.resolve('dist'), // 打包後的檔案路徑
     // 針對 asset files (fonts, icons, etc) without configuring additional loaders. // https://webpack.js.org/guides/asset-modules/
-    assetModuleFilename: './img/[name][ext]?[hash:10]', 
+    assetModuleFilename: './img/[name][ext]?[contenthash:10]',
     // publicPath: './',
   },
   resolve: {
@@ -46,6 +47,14 @@ module.exports = {
   // loader
   module: {
     rules: [
+      {
+        test: /\.m?js$/,
+        use: {
+          loader: "babel-loader",
+        },
+        include: [path.resolve('src')], // 只找這個資料夾下的檔案，可以加速 webpack 打包
+        exclude: /node_modules/, // 排除文件，加速 webpack 打包
+      },
       {
         // test: /\.(s[ac]|c)ss$/i,
         // test: /\.css$/i,
@@ -80,6 +89,24 @@ module.exports = {
         include: path.resolve('src/css'),
         exclude: /node_modules/
       },
+      // 啟用 pug
+      // {
+      //   test: /\.pug$/,
+      //   use: [
+      //     { loader: 'html-loader' },
+      //     {
+      //       loader: 'pug-html-loader',
+      //       options: {
+      //         pretty: DEV_MODE,
+      //         data: {
+      //           DEV_MODE,
+      //           // MY_DATA: 'Ryan',
+      //         },
+      //       },
+      //     },
+      //   ],
+      //   include: path.resolve('src/html'),
+      // },
       {
         test: /\.html$/i,
         use: [{
@@ -91,48 +118,48 @@ module.exports = {
       {
         // test: /\.gif/,
         test: /\.(png|jpg|gif|svg|ico)$/,
-         dependency: {
-           not: ['url']
-         },
+        dependency: {
+          not: ['url']
+        },
         use: [
           {
             loader: 'url-loader',
             options: {
               limit: 2048, // 小於 2048 bytes(2k) 的圖檔, 自動變成 base64 字串
               // 檔名： [資料夾][檔名].[副檔名]
-              name: '[path][name].[ext]?[hash:10]',
+              // name: '[path][name].[ext]?[hash:10]',
+              name: DEV_MODE ?
+                '[path][name].[ext]' :
+                '[path][name].[ext]?[contenthash:10]',
               esModule: false,
             },
           },
         ],
         include: path.resolve('src/img'),
         type: 'asset/resource'
-      },
-      {
-        test: /\.m?js$/,
-        use: {
-          loader: "babel-loader",
-        },
-        include: [path.resolve('src')], // 只找這個資料夾下的檔案，可以加速 webpack 打包
-        exclude: /node_modules/, // 排除文件，加速 webpack 打包
       }
+      
     ],
   },
   // 插件
   plugins: [
-    // 多個 html 進入點
+    // 多個 html 進入點 Start
     new HtmlWebpackPlugin({
       template: './index.html',
       filename: 'index.html', // 產出的樣板名稱
+      inject: 'body',
+      chunks: ['vendors', 'app'],
     }),
-    // new HtmlWebpackPlugin({
-    //   template: './html/about.pug',
-    //   filename: 'about.html',
-    //   chunks: ['vendors', 'about'], 這樣才會分別編譯出其他 js 進入點, 上方entry也要新增 about: ['./about.js'],
-    // }),
+    new HtmlWebpackPlugin({
+      template: './about.html',
+      filename: 'about.html',
+      inject: 'body',
+      chunks: ['vendors', 'about'], // 這樣才會分別編譯出其他 js 進入點, 上方entry也要新增 about: ['./about.js'],
+    }),
+    // 多個 html 進入點 End
     new MiniCssExtractPlugin({
       // filename: 'index.[hash].css'
-      filename: `css/[name]${CONTENT_HASH}.css`,
+      filename: DEV_MODE ? 'css/[name].css' : `css/[name]${CONTENT_HASH}.css`,
     }),
     new CleanWebpackPlugin(),
     // new CompressionPlugin() // 產生壓縮打包檔案
@@ -152,9 +179,10 @@ module.exports = {
     historyApiFallback: true, // Vue Router 會用到的功能
     port: 3300,
     hot: true, // 支援 css hot reload
+    // host: '0.0.0.0', // 可以用 ip 連線，預設是 localhost
     stats: 'minimal',
   },
-  // start 把其他libary 拆成獨立的 JS (verdors)
+  // 把其他libary 拆成獨立的 JS (verdors) (第三方套件最佳化)
   optimization: {
     // https://webpack.js.org/plugins/split-chunks-plugin/#optimizationsplitchunks
     splitChunks: {
