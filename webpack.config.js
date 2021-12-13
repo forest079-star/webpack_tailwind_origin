@@ -1,7 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+// const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const CompressionPlugin = require("compression-webpack-plugin");   
 
 const DEV_MODE = process.env.NODE_ENV === 'development';
@@ -143,17 +143,20 @@ module.exports = {
   },
   // 插件
   plugins: [
-    // 多個 html 進入點 Start
+    // 多個 html 進入點 start
+    // https://github.com/jantimon/html-webpack-plugin#options
     new HtmlWebpackPlugin({
       template: './index.html',
       filename: 'index.html', // 產出的樣板名稱
       inject: 'body',
+      scriptLoading: 'blocking',
       chunks: ['vendors', 'app'],
     }),
     new HtmlWebpackPlugin({
       template: './about.html',
       filename: 'about.html',
       inject: 'body',
+      scriptLoading: 'blocking',
       chunks: ['vendors', 'about'], // 這樣才會分別編譯出其他 js 進入點, 上方entry也要新增 about: ['./about.js'],
     }),
     // 多個 html 進入點 End
@@ -161,7 +164,7 @@ module.exports = {
       // filename: 'index.[hash].css'
       filename: DEV_MODE ? 'css/[name].css' : `css/[name]${CONTENT_HASH}.css`,
     }),
-    new CleanWebpackPlugin(),
+    // new CleanWebpackPlugin(),
     // new CompressionPlugin() // 產生壓縮打包檔案
   ],
   devServer: {
