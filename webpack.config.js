@@ -1,7 +1,8 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-// const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const CopyPlugin = require("copy-webpack-plugin");
 const CompressionPlugin = require("compression-webpack-plugin");   
 
 const DEV_MODE = process.env.NODE_ENV === 'development';
@@ -11,7 +12,7 @@ const CONTENT_HASH = DEV_MODE ? '' : '-[contenthash]';
 
 module.exports = {
   context: path.resolve('src'), //context 指定所有的檔案都從 src 資料始開始
-  // target: 'web',
+  target: 'web',
   // 入口
   // entry: './index.js',
   entry: { // 程式進入點 產出的 js 會顯示 app-xxxxx.js
@@ -164,8 +165,15 @@ module.exports = {
       // filename: 'index.[hash].css'
       filename: DEV_MODE ? 'css/[name].css' : `css/[name]${CONTENT_HASH}.css`,
     }),
-    // new CleanWebpackPlugin(),
-    // new CompressionPlugin() // 產生壓縮打包檔案
+    new CleanWebpackPlugin(),
+    // new CompressionPlugin(), // 產生壓縮打包檔案
+    new CopyPlugin({  // 可以將需要的 src 的資料夾 複製到 dist 資料夾上
+      patterns: [
+        { from: "static", to: "static" },
+        // { from: "other", to: "public" },
+      ],
+    }),
+
   ],
   devServer: {
     // watchContentBase: true,

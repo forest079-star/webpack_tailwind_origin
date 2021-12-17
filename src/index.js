@@ -18,6 +18,13 @@ const array02 = ["aaa", "bbb"]
 const arrayAll = [...array01, ...array02]
 console.log(arrayAll);
 
+class Test {
+  #a = 100
+}
+
+const tt = new Test()
+console.log('tt', tt.a);
+
 // const loginBtn = document.getElementById("login");
 // const closeBtn = document.getElementById("close");
 // const modal = document.getElementById("modal");
